@@ -1,10 +1,5 @@
-function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp)
-    %%
-    myLines = [];
-    [s,fs] = audioread(fname);
-    tone = str2double(fname(end-7));
-    ncandidates = 5;
-    
+function [f0s,t,amps,pdcs] = recordPitch(fname,pitch_lims,amp_mod)
+    %%    
 
     tstep = 0.025; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
@@ -13,7 +8,6 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp)
     nframes = ceil(length(s)/spf);
     % get first audio frame (which we do not store)
     frame = afr();
-    [f0_cand,pdc_cand] = getCandidateF0(frame,fs,pitch_lims,ncandidates);
     amp_tm1 = max(frame); 
     t(1) = -tstep;
     
@@ -23,17 +17,16 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp)
     f0s(1) = NaN;
     pdcs(1) = NaN;
 
-    amp_threshold = amp_tm1*0.1; % set threshold for sound
+    amp_threshold = amp_tm1*amp_mod; % set threshold for sound
     if tone == 3
         pitch_lims(1) = ceil(1/tstep)+1;
-        pdc_threshold = 0;
         amp_threshold = 0;
     end
     
     
     % get subsequent audio frames
     cnt = 2;
-    while ~isDone(afr) && cnt < nframes-3
+    while ~isDone(afr) && cnt < nframes-2
         frame = afr();
         amp_t = max(frame); 
         t(cnt) = t(cnt-1)+tstep;
@@ -54,17 +47,10 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp)
             pdc_t = NaN;
             f0_t = NaN; 
         end
-        
+        % extrapolate missing values
         f0_t = fillmissing([f0s f0_t]','pchip','EndValues','extrap');
-        f0_t = f0_t(end);
-        % extrapolate NaNs fi they exist
-        x = t([cnt-1, cnt])';
-        y = [f0_tm1 f0_t]';        
-        
-        hold on
-        myLines(1) = plot(x,y,'b','linewidth',2);
+        f0_t = f0_t(end);      
 
-        
         % store
         f0s(cnt) = f0_t;
         amps(cnt) = amp_t;
@@ -78,9 +64,6 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp)
         % iterate
         cnt = cnt+1;
         
-        % plot when hits right time stamp
-        %drawnow  
-        %WaitSecs(tstep/2);
     end
     
     release(afr);
