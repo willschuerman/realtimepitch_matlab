@@ -10,9 +10,9 @@ num_files = size(files,1);
 %% Use PRAAT as gold standard
 close all
 
-fname = [stimdir filesep files(20).name];
+fname = [stimdir filesep files(19).name];
 speaker_id = fname(end-5);
-if any(strcmp(speaker_id,{'a','b'})) % works best for a
+if any(strcmp(speaker_id,{'a','b'})) % WORKS BEST FOR A
     gender = 'm';
     pitch_lims = [70 300];
 else % h,i WORKS BEST FOR I
@@ -25,9 +25,9 @@ ylim(pitch_lims)
 hold on
 
 [s,fs] = audioread(fname);
-%soundsc(s,fs)
+soundsc(s,fs)
 % Testing incremental tracker against PRAAT
-[f0s, fts, amps,pdcs] = trackPitch(fname,pitch_lims);
 
+[f0s, fts, amps,pdcs] = trackPitch(fname,pitch_lims);
 %% Test live pitch tracking against both
 

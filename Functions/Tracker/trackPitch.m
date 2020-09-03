@@ -3,8 +3,10 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     myLines = [];
     [~,fs] = audioread(fname);
     tone = str2double(fname(end-7));
+    ncandidates = 5;
+    
 
-    tstep = 0.025; % minimum frequency is 1/tstep
+    tstep = 0.02; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
     afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
     adw = audioDeviceWriter('SampleRate', afr.SampleRate);
@@ -12,9 +14,9 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     % get first audio frame (which we do not store)
     frame = afr();
     amp_tm1 = max(frame); 
-    [f0_cand,pdc_cand] = getCandidateF0(frame,fs,3);
-    pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
-    f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
+    %[f0_cand,pdc_cand] = getCandidateF0_v2(frame,fs,pitch_lims,ncandidates);
+%     pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
+%     f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
     t(1) = 0;
     
     pdc_tm1 = NaN;
@@ -24,10 +26,10 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     pdcs(1) = NaN;
 
     if tone == 3
-        pitch_lims(1) = 1;
+        pitch_lims(1) = ceil(1/tstep)+1;
         amp_threshold = 0;
     else
-        amp_threshold = amp_tm1*0.8; % set threshold for sound
+        amp_threshold = 0; % set threshold for sound
 
     end
     
@@ -40,11 +42,11 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
         t(cnt) = t(cnt-1)+tstep;
         
         if amp_t >= amp_threshold
-            [f0_cand,pdc_cand] = getCandidateF0(frame,fs,10);
+            [f0_cand,pdc_cand] = getCandidateF0_v2(frame,fs,pitch_lims,ncandidates);
 
-            % depending on the tone, get rid of pitch candidates beyond limits
-            pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
-            f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
+%             % depending on the tone, get rid of pitch candidates beyond limits
+%             pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
+%             f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
 
             if isempty(f0_cand) && isnan(f0_tm1)
                 pdc_t = NaN;
@@ -64,7 +66,7 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
                 
                 % 1) get difference betweeen current and previous candidates (need
                 % to fix so that matrices are always same size
-                f0diff = f0_cand-f0_tm1';
+                f0diff = f0_cand-f0_tm1;
                 
                 % 2) modulate differences depending on tone type
                 [f0diff] = modProbs(f0diff,tone); 
@@ -89,7 +91,6 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
 
         hold on
         myLines(1) = plot(t([cnt-1, cnt]),[f0_tm1 f0_t],'b','linewidth',2);
-        axis tight
 
         
         % store
