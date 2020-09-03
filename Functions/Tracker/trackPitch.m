@@ -3,10 +3,10 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     myLines = [];
     [~,fs] = audioread(fname);
     tone = str2double(fname(end-7));
-    ncandidates = 3;
+    ncandidates = 5;
     
 
-    tstep = 0.02; % minimum frequency is 1/tstep
+    tstep = 0.025; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
     afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
     adw = audioDeviceWriter('SampleRate', afr.SampleRate);
@@ -14,9 +14,6 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     % get first audio frame (which we do not store)
     frame = afr();
     amp_tm1 = max(frame); 
-    %[f0_cand,pdc_cand] = getCandidateF0_v2(frame,fs,pitch_lims,ncandidates);
-%     pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
-%     f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
     t(1) = 0;
     
     pdc_tm1 = NaN;
@@ -29,7 +26,7 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
         pitch_lims(1) = ceil(1/tstep)+1;
         amp_threshold = 0;
     else
-        amp_threshold = 0; % set threshold for sound
+        amp_threshold = amp_tm1*0.5; % set threshold for sound
 
     end
     
@@ -42,12 +39,7 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
         t(cnt) = t(cnt-1)+tstep;
         
         if amp_t >= amp_threshold
-            [f0_cand,pdc_cand] = getCandidateF0_v2(frame,fs,pitch_lims,ncandidates);
-
-%             % depending on the tone, get rid of pitch candidates beyond limits
-%             pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
-%             f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
-
+            [f0_cand,pdc_cand] = getCandidateF0(frame,fs,pitch_lims,ncandidates);
             if isempty(f0_cand) && isnan(f0_tm1)
                 pdc_t = NaN;
                 f0_t = NaN;
@@ -84,13 +76,15 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
             pdc_t = NaN;
             f0_t = NaN; 
         end
-%         
-%         if f0_t < 70
-%             tone = 2;
-%         end
-
+        
+        % smooth values and extrapolate NaNs
+        x = t([cnt-1, cnt]);
+        y = [f0_tm1 f0_t];
+        y = fillmissing(y','pchip','EndValues','extrap');
+        
+        
         hold on
-        myLines(1) = plot(t([cnt-1, cnt]),[f0_tm1 f0_t],'b','linewidth',2);
+        myLines(1) = plot(x,y,'b','linewidth',2);
 
         
         % store
@@ -108,7 +102,7 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
         
         % plot when hits right time stamp
         drawnow  
-        WaitSecs(tstep);
+        WaitSecs(tstep/2);
     end
     
     release(afr);

@@ -3,7 +3,7 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     myLines = [];
     [~,fs] = audioread(fname);
     tone = str2double(fname(end-7));
-    ncandidates = 3;
+    ncandidates = 5;
     
 
     tstep = 0.02; % minimum frequency is 1/tstep
@@ -14,9 +14,6 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
     % get first audio frame (which we do not store)
     frame = afr();
     amp_tm1 = max(frame); 
-    %[f0_cand,pdc_cand] = getCandidateF0_v2(frame,fs,pitch_lims,ncandidates);
-%     pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
-%     f0_cand = f0_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
     t(1) = 0;
     
     pdc_tm1 = NaN;
@@ -42,7 +39,7 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims)
         t(cnt) = t(cnt-1)+tstep;
         
         if amp_t >= amp_threshold
-            [f0_cand,pdc_cand] = getCandidateF0_v2(frame,fs,pitch_lims,ncandidates);
+            [f0_cand,pdc_cand] = getCandidateF0(frame,fs,pitch_lims,ncandidates);
 
 %             % depending on the tone, get rid of pitch candidates beyond limits
 %             pdc_cand = pdc_cand(f0_cand>=pitch_lims(1) & f0_cand<=pitch_lims(2));
