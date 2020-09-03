@@ -1,53 +1,46 @@
-function [f0,pdc] = getCandidateF0(frame,fs,ncandidates)
+function [f0,pdc] = getCandidateF0(y,fs,pitch_lims,ncandidates)
 
     % set variables
     f0 = nan(ncandidates,1);
     pdc = nan(ncandidates,1);
     
-    % hann the frame
-    win = hann(length(frame));
-    frame = detrend(frame.*win,'constant'); 
-    [c, lag] = xcorr(frame,'coeff');
-
-    % remove negative lags
-    c(1:length(frame)) = [];
-    lag(1:length(frame)) = [];
-    f = fs./lag;
-    
-    % remove impossible frequencies
-    c = c(f<400);
-    lag = lag(f<400);
-    f = f(f<400);
-    
-    % find peaks
-    [pks,locs] = findpeaks(c);
-        
-
-    % convert peaks to frequency
-    tmp = fs./lag(locs);
-    
-    % find and rank candidates?
-    for nc = 1:ncandidates
-        if ~isempty(tmp)
-            [conf, idx] = max(pks);
-            f0(nc,1) = tmp(idx);
-            pdc(nc,1) = conf;
-            tmp(idx) = [];
-            pks(idx) = [];
-        end
-    end
-    
-    
-    
-    
+    %% testing out pre-emphasis
+    % the speech signal was filtered through a 1-kHz low-pass filter and each sample of the low-pass 
+    % filtered signal was raised to the third power to emphasize the high-amplitude portions of the speech waveform
+    y = y.^3;
     %%
-%     subplot(1,2,1)
-%     plot(lag,c)
-%     hold on
-%     scatter(lag(locs),pks)
-%     title('peaks found at lag')
-%     subplot(1,2,2)
-%     scatter(tmp,pks)
-%     box on
-%     title('strength at frequency')    
+    
+    
+    edge = round(fs./fliplr(pitch_lims)); % gives pitch lims by lags. interesting
+    r    = cast(size(y,1),'like',y);
+
+    % Autocorrelation
+    mxl = min(edge(end),r - 1);
+    m2  = 2^nextpow2(2*r - 1);
+    c1  = real(ifft(abs(fft(y,m2,1)).^2,[],1))./sqrt(m2);
+    Rt  = [c1(m2 - mxl + (1:mxl),:); c1(1:mxl+1,:)];
+
+    % Energy of original signal, y
+    yRMS = sqrt(Rt(edge(end)+1,:));
+
+    % Clip out the lag domain of based on pitch search range
+    lag  = Rt( (edge(end)+1+edge(1)):end, : );
+
+    % Repmat for vectorized computation
+    yRMS = repmat(yRMS,size(lag,1),1);
+
+    % Normalize lag domain energy by input signal energy
+    lag = lag./yRMS;
+
+    % Zero-pad domain so time locs can be easily interpreted.
+    domain = [zeros(edge(1)-1,size(lag,2));lag];
+    fvec = fs./(1:length(domain));
+    
+    % Peak picking
+    [pdc,locs] = audio.internal.pitch.getCandidates(domain,edge,ncandidates,20);
+    
+    % Convert lag domain to frequency
+    f0 = fs./locs;
+  
+
 end
