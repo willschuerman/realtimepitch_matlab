@@ -8,7 +8,7 @@ switch tone
         f0diff = abs(f0diff); 
     case 3
         f0diff = abs(f0diff)/5; % don't penalize jumps
-        f0diff = abs(f0diff);
+        %f0diff = abs(f0diff);
     case 4
         f0diff(f0diff>0) = f0diff(f0diff>0)*3; % penalize increases
         f0diff = abs(f0diff);

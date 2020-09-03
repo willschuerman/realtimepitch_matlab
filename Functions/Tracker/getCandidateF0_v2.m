@@ -4,7 +4,11 @@ function [f0,pdc] = getCandidateF0_v2(y,fs,pitch_lims,ncandidates)
     f0 = nan(ncandidates,1);
     pdc = nan(ncandidates,1);
     
-    %
+    %% testing out pre-emphasis
+    % the speech signal was filtered through a 1-kHz low-pass filter and each sample of the low-pass 
+    % filtered signal was raised to the third power to emphasize the high-amplitude portions of the speech waveform
+    y = y.^3;
+    %%
     
     
     edge = round(fs./fliplr(pitch_lims)); % gives pitch lims by lags. interesting
@@ -34,17 +38,6 @@ function [f0,pdc] = getCandidateF0_v2(y,fs,pitch_lims,ncandidates)
     
     % Peak picking
     [pdc,locs] = audio.internal.pitch.getCandidates(domain,edge,ncandidates,20);
-    
-    
-    semilogx(fvec,domain)
-    hold on
-    h(1) = scatter(fvec(locs),domain(locs)); % method one
-    
-    % find peaks
-    [pks,lcs] = findpeaks(domain);
-    h(2) = scatter(fvec(lcs),domain(lcs)); % method one
-    legend(h, 'method 1','method 2')
-    
     
     % Convert lag domain to frequency
     f0 = fs./locs;
