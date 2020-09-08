@@ -18,8 +18,10 @@ iarg = iarg + 1; if nargin < iarg || isempty(yes_plot), yes_plot = 0; end
 minimum_pitch = pitch_lims(1);
 maximum_pitch = pitch_lims(2);
 
-audiowrite('s4p.wav',0.5*sig./max(abs(sig)),fs);
 curdir = cd;
+cd([curdir filesep 'Praat']);
+audiowrite('s4p.wav',0.5*sig./max(abs(sig)),fs);
+
 if ispc
     [status,result] = system(sprintf('sendpraat praat "execute "%s\\pitch_proc.praat\" %d, %d, %f, %d, %d, %f, %f, %f, %f, %f, %d"', ...
             curdir, pitch_time_step, pitch_lims(1), no_candidates, very_accurate, silence_threshold, voicing_threshold, octave_cost, octave_jump_cost, voiced_unvoiced_cost, pitch_lims(2)));
@@ -81,4 +83,8 @@ if yes_plot
   hpl = plot(praat_pitch.frame_taxis,praat_pitch.freq);
   isp = isp + 1; hax(isp) = subplot(nsp,1,isp);
   hpl = plot(praat_pitch.frame_taxis,praat_pitch.strn);
+end
+
+cd(curdir); % return to original directory
+
 end

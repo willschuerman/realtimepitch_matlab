@@ -1,11 +1,11 @@
 clear; close all; clc;
 set(0,'defaultfigurecolor',[1 1 1])
-thisdir = cd();
-addpath(genpath(thisdir));
+curdir = cd;
+addpath(genpath(curdir));
 %% Basic pitch tracking
 stimdir = 'Files/stimuli';
 
-files = dir(fullfile([thisdir filesep stimdir],'*aN.wav'));
+files = dir(fullfile([curdir filesep stimdir],'*iN.wav'));
 num_files = size(files,1);
 
 %% Use PRAAT as gold standard, compare with pitch tracking
@@ -28,9 +28,9 @@ for sf = 1:20
     plot(t_praat,f0_praat,'r','linewidth',2);
     ylim(pitch_lims)
     hold on
-% 
-[s,fs] = audioread(fname);
-%     soundsc(s,fs)
+    % 
+    %[s,fs] = audioread(fname);
+    %     soundsc(s,fs)
     % Testing incremental tracker against PRAAT
 
     [f0s, fts, amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod);

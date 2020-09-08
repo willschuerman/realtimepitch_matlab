@@ -8,7 +8,6 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
     tstep = 0.025; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
     afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
-    adw = audioDeviceWriter('SampleRate', afr.SampleRate);
     nframes = ceil(length(s)/spf);
     % get first audio frame (which we do not store)
     frame = afr();
@@ -71,6 +70,5 @@ function [f0s,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
     end
     
     release(afr);
-    release(adw);
     
 end

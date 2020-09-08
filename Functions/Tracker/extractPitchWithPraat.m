@@ -31,7 +31,7 @@ end
 
 f0_praat = get_praat_pitch(x1,pitch_lims,fs,pitch_time_step,no_candidates, very_accurate, silence_threshold, voicing_threshold, octave_cost, octave_jump_cost, voiced_unvoiced_cost);
 
-% compare with praat
+% extract reading
 t_praat = f0_praat.frame_taxis;
 t_praat = t_praat - min(t_praat);
 f0_praat = f0_praat.freq;
