@@ -1,5 +1,5 @@
-function [f0,pdc] = getCandidateF0(y,fs,pitch_lims,ncandidates)
-
+function [f0,pdc] = getCandidateF0(y,fs,pitch_lims)
+    ncandidates = 5; % hard coded
     % set variables
     f0 = nan(ncandidates,1);
     pdc = nan(ncandidates,1);

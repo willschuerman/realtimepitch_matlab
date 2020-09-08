@@ -17,7 +17,6 @@ function [f0s,f0cents,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
     
     pdc_tm1 = NaN;
     f0_tm1 = NaN;
-    base_f0 = NaN;
     
     f0s(1) = NaN;
     pdcs(1) = NaN;
@@ -29,6 +28,8 @@ function [f0s,f0cents,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
         amp_threshold = 0;
     end
     
+    % set marker for first good pitch measurement
+    pitch_found = 0;
     
     % get subsequent audio frames
     cnt = 2;
@@ -37,8 +38,28 @@ function [f0s,f0cents,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
         amp_t = max(frame); 
         t(cnt) = t(cnt-1)+tstep;
         
-        [f0_t,pdc_t,base_f0] = getF0(base_f0,amp_t,amp_threshold,frame,fs,pitch_lims);
-
+        [f0_t,pdc]_t = getF0(frame,fs,pitch_lims);
+        if amp_t >= amp_threshold
+            [f0_cand,pdc_cand] = getCandidateF0(frame,fs,pitch_lims,ncandidates);
+            if isempty(f0_cand) && isnan(f0_tm1)
+                pdc_t = NaN;
+                f0_t = NaN;
+            elseif isempty(f0_cand) % if the current value is nan
+                pdc_t = NaN;
+                f0_t = NaN;
+            else
+                f0_t = f0_cand(1); % using best candidate gives best results
+                pdc_t = pdc_cand(1);
+                if pitch_found == 0
+                    pitch_found = 1; 
+                    base_f0 = f0_t;
+                end
+            end
+        else
+            pdc_t = NaN;
+            f0_t = NaN; 
+        end
+        
         % extrapolate missing values
         f0_t = fillmissing([f0s f0_t]','pchip','EndValues','extrap');
         f0_t = f0_t(end);      
