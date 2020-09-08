@@ -1,4 +1,4 @@
-function [f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod)
+function [f0s,t,amps,pdcs] = plotUserPitch(pitch_lims,amp_mod)
     %%    
     fs = 44100; % hard code sample rate
     tstep = 0.025; % minimum frequency is 1/tstep
@@ -11,6 +11,8 @@ function [f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod)
     tstart = 0;
     tend = tstart + (spf/fs);
     readTimer = tic;
+    title('wait...')
+    drawnow
     while tend <= baseDuration
         frame = afr();
         amp_t = max(frame);
@@ -33,16 +35,21 @@ function [f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod)
     pdcs(1) = NaN;
     t(1) = -tstep;
 
+    
     % start recording
-    tstart = 0;
+    tstart = -tstep;
     tend = tstart + (spf/fs);
     readTimer = tic;
     cnt = 2;
     soundFound = 0;
+    
+    % tell subject to start speaking
+    title('GO!');drawnow;
     while tend <= recordDuration
         frame = afr();
         amp_t = max(frame);
         t(cnt) = t(cnt-1)+tstep;
+        disp(t(cnt));
         
         if amp_t >= amp_threshold
             % if this is the first time sound is found, reset timer
@@ -69,10 +76,18 @@ function [f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod)
         f0_t = fillmissing([f0s f0_t]','pchip','EndValues','extrap');
         f0_t = f0_t(end);      
 
-        % store
-        f0s(cnt) = f0_t;
-        amps(cnt) = amp_t;
-        pdcs(cnt) = pdc_t;
+        % set up for plotting segment
+        if soundFound ==1
+            x = t([cnt-1, cnt]);
+            y = [f0_tm1 f0_t];  
+            plot(x,y,'k','linewidth',2);
+
+
+            % store
+            f0s(cnt) = f0_t;
+            amps(cnt) = amp_t;
+            pdcs(cnt) = pdc_t;
+        end
         
         % assign current values to previous value status
         amp_tm1 = amp_t;
@@ -90,6 +105,7 @@ function [f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod)
         
         % wait until the window is finished
         WaitSecs(timeDiff);
+        drawnow
     end
 release(afr);
     

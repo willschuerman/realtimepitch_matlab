@@ -1,10 +1,11 @@
 clear; close all; clc;
 set(0,'defaultfigurecolor',[1 1 1])
-addpath(genpath('/Users/willschuerman/Documents/Research/Tasks/realtimepitch_matlab'));
+thisdir = cd();
+addpath(genpath(thisdir));
 %% Basic pitch tracking
-stimdir = '/Users/willschuerman/Documents/Research/Tasks/realtimepitch_matlab/files/stimuli';
+stimdir = 'Files/stimuli';
 
-files = dir(fullfile(stimdir,'*aN.wav'));
+files = dir(fullfile([thisdir filesep stimdir],'*aN.wav'));
 num_files = size(files,1);
 
 %% Use PRAAT as gold standard, compare with pitch tracking
@@ -28,7 +29,7 @@ for sf = 1:20
     ylim(pitch_lims)
     hold on
 % 
-%     [s,fs] = audioread(fname);
+[s,fs] = audioread(fname);
 %     soundsc(s,fs)
     % Testing incremental tracker against PRAAT
 
@@ -57,5 +58,11 @@ switch speaker_id % WORKS BEST FOR A and I
         amp_mod = 0.1;            
 end
 [f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,10);
+%% record Pitch 
+close all
+[f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod);
 
-
+%% record and Plot
+[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,10);
+hold on
+[f0s,t,amps,pdcs] = plotUserPitch(pitch_lims,amp_mod);
