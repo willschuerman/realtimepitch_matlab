@@ -1,8 +1,7 @@
-function [f0s, t, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,plotCents)
+function [f0s, t, amps,pdcs] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,plotCents)
     [s,fs] = audioread(fname);
     
     tone = str2double(fname(end-7));
-    ncandidates = 5;
     
     % set up audio extraction
     tstep = 0.025; % minimum frequency is 1/tstep
@@ -11,21 +10,18 @@ function [f0s, t, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,bar
     adw = audioDeviceWriter('SampleRate', afr.SampleRate);
     nframes = ceil(length(s)/spf);
     
-    % Initialize figure
-    myFig = figure('Position',[350,500,1000,600]);
-    box off
-    hold on
-    xlim([-0.1,nframes*tstep]);
     if plotCents
-        ylim([0 2]);
         barwidth = barwidth/100;
-    else
-        ylim(pitch_lims);
     end
-    set(gca,'XTick',[],'YTick',[]);
-    title('LISTEN','FontSize',30)
+
+    title('LISTEN','FontSize',30)   
     
-    amp_threshold = max(s(1:spf));
+    % set threshold for sound
+    amp_threshold = max(s(1:spf))*amp_mod; 
+    if tone == 3
+        pitch_lims(1) = ceil(1/tstep)+1;
+        amp_threshold = 0;
+    end
     
     % initialize variables
     base_f0 = NaN;
@@ -40,7 +36,7 @@ function [f0s, t, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,bar
     
     % load first audio sample 
     frame = afr();  
-    while cnt < nframes+2
+    while cnt < nframes-2
         amp_t = max(frame);
         %fprintf('%g ',t(cnt));
 
