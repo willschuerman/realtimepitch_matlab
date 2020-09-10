@@ -37,7 +37,7 @@ function [f0,pdc] = getCandidateF0(y,fs,pitch_lims)
     fvec = fs./(1:length(domain));
     
     % Peak picking
-    [pdc,locs] = audio.internal.pitch.getCandidates(domain,edge,ncandidates,20);
+    [pdc,locs] = getCandidates(domain,edge,ncandidates,20);
     
     % Convert lag domain to frequency
     f0 = fs./locs;

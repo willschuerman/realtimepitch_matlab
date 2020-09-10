@@ -41,6 +41,7 @@ function runPitchExpr(subjID,gender)
     %% present stimuli
     for tr = 1:length(trialOrder)
         fname = [stimdir filesep files(trialOrder(tr)).name];
+        disp(fname)
         [f0s,f0cents,userTime,modelF0s,modelTime] = pitchTrackTrial(fname,pitch_lims,model_amp_mod,user_amp_mod,plotCents);
         if showScore
             pitchScore = plotPitchScore(f0s,f0cents,modelF0s,user_amp_mod,plotCents);
