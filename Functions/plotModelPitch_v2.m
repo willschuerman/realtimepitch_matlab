@@ -1,4 +1,4 @@
-function [f0s, t, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,plotCents)
+function [f0s, t, amps,pdcs,myFig] = plotModelPitch_v2(fname,pitch_lims,amp_mod,barwidth,plotCents)
     [s,fs] = audioread(fname);
     
     tone = str2double(fname(end-7));
@@ -23,7 +23,6 @@ function [f0s, t, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,bar
         ylim(pitch_lims);
     end
     set(gca,'XTick',[],'YTick',[]);
-    title('LISTEN','FontSize',30)
     
     amp_threshold = max(s(1:spf));
     

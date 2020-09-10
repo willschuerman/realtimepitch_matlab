@@ -32,16 +32,16 @@ function [f0s,f0cents,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
     
     % get subsequent audio frames
     cnt = 2;
-    while ~isDone(afr) && cnt < nframes-2
+    while ~isDone(afr) && cnt < nframes-1
         frame = afr();
         amp_t = max(frame); 
         t(cnt) = t(cnt-1)+tstep;
         
         [f0_t,pdc_t,base_f0] = getF0(base_f0,amp_t,amp_threshold,frame,fs,pitch_lims);
 
-        % extrapolate missing values
-        f0_t = fillmissing([f0s f0_t]','pchip','EndValues','extrap');
-        f0_t = f0_t(end);      
+%         % extrapolate missing values
+%         f0_t = fillmissing([f0s f0_t]','pchip','EndValues','extrap');
+%         f0_t = f0_t(end);      
 
         % store
         f0s(cnt) = f0_t;

@@ -87,7 +87,7 @@ switch speaker_id % WORKS BEST FOR A and I
         pitch_lims = [80 350];
         amp_mod = 0.1;            
 end
-[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,10,0);
+[f0s, fts, amps,pdcs,myFig] = plotModelPitch_v2(fname,pitch_lims,amp_mod,10,0);
 
 %% play and draw model sound - Cents
 close all
@@ -107,12 +107,63 @@ switch speaker_id % WORKS BEST FOR A and I
         pitch_lims = [80 350];
         amp_mod = 0.1;            
 end
-[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,10,10);
+[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,10,1);
 %% record Pitch 
 close all
-[f0s,t,amps,pdcs] = recordPitch(pitch_lims,amp_mod);
+gender = 'm';
+pitch_lims = [70 220];
+amp_mod = 10;
+[f0s,f0cents,fts,amps,pdcs,sig] = recordPitch(pitch_lims,amp_mod);
+disp('stop');
+
+% plot results, compare with offline tracking
+audiowrite('Praat/s4p.wav',0.5*sig./max(abs(sig)),44100);
+subplot(3,1,1)
+plot(sig)
+title('extracted sound')
+subplot(3,1,2)
+[f0_praat, t_praat] = extractPitchWithPraat('Praat/s4p.wav');
+plot(t_praat,f0_praat,'r','linewidth',3);
+hold on
+[testf0,~, testt, ~,~] = trackPitch('Praat/s4p.wav',pitch_lims,0.5);
+plot(testt,testf0,'b','linewidth',2);
+ylim(pitch_lims)
+title('offline tracking')
+legend('praat','my tracker')
+subplot(3,1,3)
+plot(fts,f0s,'b','linewidth',2);
+hold on
+plot(testt,testf0,'k--','linewidth',2);
+yyaxis right
+plot(fts,f0cents,'-.','linewidth',2);
+
+legend('online Hz','offline Hz','online cents');
+title('comparison ')
+
 
 %% record and Plot
-[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,amp_mod,10);
+close all
+stimdir = '/Users/willschuerman/Documents/Research/Tasks/realtimepitch_matlab/files/stimuli';
+files = dir(fullfile(stimdir,'*aN.wav'));
+num_files = size(files,1);
+sf = 2;
+fname = [stimdir filesep files(sf).name];
+speaker_id = fname(end-5);
+switch speaker_id % WORKS BEST FOR A and I
+    case 'a' 
+        gender = 'm';
+        pitch_lims = [70 220];
+        amp_mod = 1.1;   
+    case 'i' 
+        gender = 'f';
+        pitch_lims = [80 350];
+        amp_mod = 0.1;            
+end
+[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,0,10,1);
 hold on
-[f0s,t,amps,pdcs] = plotUserPitch(pitch_lims,amp_mod);
+pause(1)
+% user settings
+gender = 'm';
+pitch_lims = [70 220];
+amp_mod = 10;
+[f0s,t,amps,pdcs] = plotUserPitch(pitch_lims,amp_mod,1);
