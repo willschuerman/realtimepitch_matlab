@@ -159,11 +159,11 @@ switch speaker_id % WORKS BEST FOR A and I
         pitch_lims = [80 350];
         amp_mod = 0.1;            
 end
-[f0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,0,10,1);
+[modelF0s, fts, amps,pdcs,myFig] = plotModelPitch(fname,pitch_lims,0,10,1);
 hold on
 pause(1)
 % user settings
 gender = 'm';
 pitch_lims = [70 220];
 amp_mod = 10;
-[f0s,t,amps,pdcs] = plotUserPitch(pitch_lims,amp_mod,1);
+[f0s,f0cents,t,amps,pdcs] = plotUserPitch(pitch_lims,amp_mod,1,modelF0s,10);

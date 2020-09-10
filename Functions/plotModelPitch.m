@@ -145,5 +145,4 @@ while cnt < nframes+10
 end    
 release(afr);
 release(adw);
-
 end

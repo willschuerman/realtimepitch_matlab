@@ -1,11 +1,22 @@
-function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plotCents)
-    %%    
+function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plotCents,modelF0s,barwidth)
+    % set up recording device   
     fs = 44100; % hard code sample rate
     tstep = 0.025; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
     afr = audioDeviceReader('NumChannels',1,'SampleRate',fs,'SamplesPerFrame',spf);
     audio = [];
     
+    % adjust barwidth depending on plottype
+    if ~isempty(barwidth)
+        if plotCents
+            barwidth = barwidth/100;
+        end
+    end
+    if ~isempty(modelF0s)
+        if plotCents
+            modelF0s = modelF0s/modelF0s(1);
+        end
+    end    
     % set up for baseline
     title('#####','FontSize',30)
     drawnow()
@@ -26,8 +37,8 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
     end
     amp_threshold = amp_threshold*amp_mod;    
     
-    % set up for recording voice
-    recordDuration = 2;
+    % set recording duration
+    recordDuration = 3;
     
     % initialize variables
     pdc_tm1 = NaN;
@@ -101,7 +112,20 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         else
             y = [f0_tm1 f0_t];  
         end
-        plot(x,y,'r','linewidth',4);
+        % if barwidth or modelF0s is unspecified, just plot a red line. 
+        if isempty(barwidth) || isempty(modelF0s)
+            plot(x,y,'r','linewidth',4);
+        else
+            % if modelF0s is specified, plot a green line when within
+            % target boundaries.
+            if cnt <= length(modelF0s)
+                if y(2) >= modelF0s(cnt)-barwidth && y(2) <= modelF0s(cnt)+barwidth
+                    plot(x,y,'g','linewidth',4);
+                else
+                    plot(x,y,'r','linewidth',4);
+                end
+            end
+        end
         
         
         % assign current values to previous value status
@@ -124,5 +148,6 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         WaitSecs(timeDiff);
     end
 release(afr);
-    
+title('')
+
 end
