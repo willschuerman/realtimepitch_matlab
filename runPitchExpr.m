@@ -1,4 +1,4 @@
-function runPitchExpr(subjID,gender)
+function runPitchExpr(subjID,gender,user_pitch_lims)
     %% setup for exper
     close all; clc;
     set(0,'defaultfigurecolor',[1 1 1])
@@ -11,12 +11,12 @@ function runPitchExpr(subjID,gender)
 
     %% set up directories and pitch limits
     stimdir = 'Files/stimuli';
-    if strcmpi(lower(gender(1)),'f')
-        pitch_lims = [80 350];
+    if strcmpi(gender(1),'f')
+        model_pitch_lims = [80 350];
         model_amp_mod = 0.1;
         files = dir(fullfile([curdir filesep stimdir],'*iN.wav'));
     else
-        pitch_lims = [70 220];
+        model_pitch_lims = [70 220];
         model_amp_mod = 1.1;
         files = dir(fullfile([curdir filesep stimdir],'*aN.wav'));
     end
@@ -27,6 +27,7 @@ function runPitchExpr(subjID,gender)
 
     %% initialize figure
     % Initialize figure
+    pitch_lims = [min([user_pitch_lims(1) model_pitch_lims(1)]) max([user_pitch_lims(2) model_pitch_lims(2)])];
     myFig = figure('Position',[350,500,1000,600]);
     box off
     hold on
@@ -42,7 +43,7 @@ function runPitchExpr(subjID,gender)
     for tr = 1:length(trialOrder)
         fname = [stimdir filesep files(trialOrder(tr)).name];
         disp(fname)
-        [f0s,f0cents,userTime,modelF0s,modelTime] = pitchTrackTrial(fname,pitch_lims,model_amp_mod,user_amp_mod,plotCents);
+        [f0s,f0cents,userTime,modelF0s,modelTime] = pitchTrackTrial(fname,model_pitch_lims,user_pitch_lims,model_amp_mod,user_amp_mod,plotCents);
         if showScore
             pitchScore = plotPitchScore(f0s,f0cents,modelF0s,user_amp_mod,plotCents);
         end
@@ -62,5 +63,5 @@ function runPitchExpr(subjID,gender)
     end
     scoreTracker(tr) = pitchScore;
     axis off
-    title(sprintf('Total Score = %g',mean(scoreTracker)),'FontSize',50)
+    text(0.5,0.5,sprintf('Total Score = %g',round(mean(scoreTracker)),2)*100,'FontSize',50,'HorizontalAlignment',center)
 end

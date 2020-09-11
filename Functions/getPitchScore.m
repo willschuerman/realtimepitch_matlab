@@ -3,8 +3,8 @@ function pitchScore = getPitchScore(f0s,f0cents,modelF0s,barwidth,useCents)
     f0cents = f0cents(~isnan(f0cents));
     modelF0s = modelF0s(~isnan(modelF0s));
     
-    nsamples = max([length(f0s),length(modelF0s)]);
-    ntocount = min([length(f0s),length(modelF0s)]);
+    nsamples = max([length(f0s)-1,length(modelF0s)]);
+    ntocount = min([length(f0s)-1,length(modelF0s)]);
     if useCents
         barwidth = barwidth/100;
         modelF0s = modelF0s/modelF0s(1);

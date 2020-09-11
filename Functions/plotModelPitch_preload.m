@@ -1,72 +1,53 @@
-function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plotCents,modelF0s,barwidth)
-    % set up recording device   
-    fs = 44100; % hard code sample rate
+function [f0s, t, amps,pdcs] = plotModelPitch_preload(fname,pitch_lims,amp_mod,barwidth,plotCents)
+    [s,fs] = audioread(fname);
+    
+    tone = str2double(fname(end-7));
+    
+    % set up audio extraction
     tstep = 0.025; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
-    afr = audioDeviceReader('NumChannels',1,'SampleRate',fs,'SamplesPerFrame',spf);
-    audio = [];
+    %afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
+    %adw = audioDeviceWriter('SampleRate', fs);
+    nframes = ceil(length(s)/spf);
     
-    % adjust barwidth depending on plottype
-    if ~isempty(barwidth)
-        if plotCents
-            barwidth = barwidth/100;
-        end
+    if plotCents
+        barwidth = barwidth/100;
     end
-    if ~isempty(modelF0s)
-        if plotCents
-            modelF0s = modelF0s/modelF0s(1);
-        end
-    end    
-    % set up for baseline
-    title('#####','FontSize',30)
-    drawnow()
-    baseDuration = 1;
-    amp_threshold = 0;
-    tstart = 0;
-    tend = tstart + (spf/fs);
-    readTimer = tic;
-    while tend <= baseDuration
-        frame = afr();
-        amp_t = max(frame);
-        amp_threshold = mean([amp_threshold,amp_t]);
-        rt = toc(readTimer);
-        timeDiff = tend-rt;
-        tstart = tend+1/fs;
-        tend = tstart + (spf/fs);
-        WaitSecs(timeDiff);
-    end
-    amp_threshold = amp_threshold*amp_mod;    
+
+    title('LISTEN','FontSize',30)   
     
-    % set recording duration
-    recordDuration = 3;
+    % set threshold for sound
+    amp_threshold = max(s(1:spf))*amp_mod; 
+    if tone == 3
+        pitch_lims(1) = ceil(1/tstep)+1;
+    end
     
     % initialize variables
-    f0_tm1 = NaN;
     base_f0 = NaN;
-    f0_t = NaN;
-
-
-    amps(1) = amp_threshold;
-    t(1) = -tstep;
 
     % start recording
     tstart = 0;
     tend = tstart + (spf/fs);
+    sampstart = 1;
+    sampend = sampstart+spf-1;
     readTimer = tic;
     cnt = 1;
     soundFound = 0;
     pitchFound = 0;
     
-    % start recording period
-    title('SPEAK','FontSize',30)
-    drawnow()
-    while tend <= recordDuration
-        frame = afr();
+    % play sound
+    soundsc(s,fs);
+    
+    % load first audio sample 
+    frame = s(sampstart:sampend);
+    while sampend < length(s)-2*spf
         amp_t = max(frame);
+        %fprintf('%g ',t(cnt));
 
         % restart count once sound is found
         if amp_t >= amp_threshold
             [~,pdc_t,~] = getF0(base_f0,amp_t,amp_threshold,frame,fs,pitch_lims);
+            f0_t = NaN;
             if soundFound == 0
                 pdc_threshold = pdc_t;
                 soundFound = 1;
@@ -89,10 +70,9 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
                 tstart = 0;
                 tend = tstart + (spf/fs);
                 pitchFound = 1;
-            elseif pitchFound == 1 && pdc_t >= pdc_threshold*0.9 % lower threshold after first sample
+            elseif pitchFound == 1 && pdc_t >= pdc_threshold*0 % lower threshold after first sample
                 [f0_t,pdc_t,base_f0] = getF0(base_f0,amp_t,amp_threshold,frame,fs,pitch_lims);
             end            
-            audio = [audio; frame];
         else
             f0_t = NaN;
             pdc_t = NaN;
@@ -105,6 +85,10 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         f0cents(cnt) = f0_t/base_f0;
         t(cnt) = tstart;
         
+        if pitchFound==0
+            f0_tm1 = NaN;
+        end
+        
         % plot segment
         x = [t(cnt) t(cnt)+tstep];
         if plotCents
@@ -112,28 +96,24 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         else
             y = [f0_tm1 f0_t];  
         end
-        % if barwidth or modelF0s is unspecified, just plot a red line. 
-        if isempty(barwidth) || isempty(modelF0s)
-            plot(x,y,'r','linewidth',4);
-        else
-            % if modelF0s is specified, plot a green line when within
-            % target boundaries.
-            if cnt <= length(modelF0s)
-                if y(2) >= modelF0s(cnt)-barwidth && y(2) <= modelF0s(cnt)+barwidth
-                    plot(x,y,'g','linewidth',4);
-                else
-                    plot(x,y,'r','linewidth',4);
-                end
-            end
-        end
-        hold on
-        
+        % generate patch
+        uE=y+barwidth;
+        lE=y-barwidth;
+        yP=[lE,fliplr(uE)];
+        xP=[x,fliplr(x)];
+        H.patch=patch(xP,yP,1);
+
+        set(H.patch,'facecolor','b', ...
+            'edgecolor','none', ...
+            'facealpha',0.2, ...
+            'HandleVisibility', 'off', ...
+            'Tag', 'shadedErrorBar_patch')               
+        hold on        
         
         % assign current values to previous value status
         amp_tm1 = amp_t;
         f0_tm1 = f0_t;
         pdc_tm1 = pdc_t;
-        
         
         % update counter
         cnt = cnt+1;
@@ -143,12 +123,29 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         timeDiff = tend-rt;
         tstart = tend+1/fs;
         tend = tstart + (spf/fs);
+        sampstart = sampstart+spf;
+        sampend = sampstart+spf-1;
         
         % wait until the window is finished
-        drawnow()
         WaitSecs(timeDiff);
-    end
-release(afr);
-title('')
+        drawnow()
+        
+        % play audio
+        %adw(frame);
 
+        % load next audio sample 
+        frame = s(sampstart:sampend);
+    end
+    
+while sampend <= length(s)
+     % play audio
+    %adw(frame);
+
+    % load next audio sample 
+    frame = s(sampstart:sampend); 
+    sampstart = sampstart+spf;
+    sampend = sampstart+spf-1;
+end    
+%release(afr);
+%release(adw);
 end

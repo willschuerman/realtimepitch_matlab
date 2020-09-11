@@ -1,8 +1,11 @@
 function [f0s,f0cents,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
     %%
     [s,fs] = audioread(fname);
-    tone = str2double(fname(end-7));
-    ncandidates = 5;
+    if length(fname) > 7
+        tone = str2double(fname(end-7));
+    else
+        tone = 1;
+    end
     
 
     tstep = 0.025; % minimum frequency is 1/tstep
@@ -22,13 +25,12 @@ function [f0s,f0cents,t,amps,pdcs] = trackPitch(fname,pitch_lims,amp_mod)
     f0s(1) = NaN;
     pdcs(1) = NaN;
     f0cents(1) = NaN;
+    amps(1) = amp_tm1;
 
     amp_threshold = amp_tm1*amp_mod; % set threshold for sound
     if tone == 3
         pitch_lims(1) = ceil(1/tstep)+1;
-        amp_threshold = 0;
     end
-    
     
     % get subsequent audio frames
     cnt = 2;

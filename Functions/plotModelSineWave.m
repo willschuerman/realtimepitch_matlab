@@ -1,41 +1,37 @@
-function [f0s, t, amps,pdcs] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,plotCents)
-    [s,fs] = audioread(fname);
+function [f0s, t, amps,pdcs] = plotModelSineWave(s,fs,pitch_lims,amp_mod,barwidth)
     
-    tone = str2double(fname(end-7));
     
     % set up audio extraction
     tstep = 0.025; % minimum frequency is 1/tstep
     spf = ceil(tstep*fs); % will need to edit this
-    afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
-    adw = audioDeviceWriter('SampleRate', afr.SampleRate);
-    nframes = ceil(length(s)/spf);
+    %afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
+    %adw = audioDeviceWriter('SampleRate', fs);
     
-    if plotCents
-        barwidth = barwidth/100;
-    end
 
     title('LISTEN','FontSize',30)   
     
     % set threshold for sound
-    amp_threshold = max(s(1:spf))*amp_mod; 
-    if tone == 3
-        pitch_lims(1) = ceil(1/tstep)+1;
-    end
-    
+    amp_threshold = 1*amp_mod;
+
     % initialize variables
     base_f0 = NaN;
 
     % start recording
     tstart = 0;
     tend = tstart + (spf/fs);
+    sampstart = 1;
+    sampend = sampstart+spf-1;
     readTimer = tic;
     cnt = 1;
     soundFound = 0;
     pitchFound = 0;
     
+    % play sound
+    soundsc(s,fs);
+    
     % load first audio sample 
-    frame = afr();  
-    while cnt < nframes-2
+    frame = s(sampstart:sampend);
+    while sampend < length(s)-2*spf
         amp_t = max(frame);
         %fprintf('%g ',t(cnt));
 
@@ -86,11 +82,8 @@ function [f0s, t, amps,pdcs] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,
         
         % plot segment
         x = [t(cnt) t(cnt)+tstep];
-        if plotCents
-            y = [f0_tm1/base_f0 f0_t/base_f0];  
-        else
-            y = [f0_tm1 f0_t];  
-        end
+        y = [f0_tm1 f0_t];  
+        
         % generate patch
         uE=y+barwidth;
         lE=y-barwidth;
@@ -118,26 +111,29 @@ function [f0s, t, amps,pdcs] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,
         timeDiff = tend-rt;
         tstart = tend+1/fs;
         tend = tstart + (spf/fs);
+        sampstart = sampstart+spf;
+        sampend = sampstart+spf-1;
         
         % wait until the window is finished
-        %WaitSecs(timeDiff);
+        WaitSecs(timeDiff);
         drawnow()
         
         % play audio
-        adw(frame);
+        %adw(frame);
 
         % load next audio sample 
-        frame = afr();  
+        frame = s(sampstart:sampend);
     end
     
-while cnt < nframes+10
-    cnt = cnt+1;
+while sampend <= length(s)
      % play audio
-    adw(frame);
+    %adw(frame);
 
     % load next audio sample 
-    frame = afr();  
+    frame = s(sampstart:sampend); 
+    sampstart = sampstart+spf;
+    sampend = sampstart+spf-1;
 end    
-release(afr);
-release(adw);
+%release(afr);
+%release(adw);
 end
