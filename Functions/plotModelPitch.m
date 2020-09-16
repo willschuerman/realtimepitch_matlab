@@ -4,7 +4,7 @@ function [f0s, t, amps,pdcs] = plotModelPitch(fname,pitch_lims,amp_mod,barwidth,
     tone = str2double(fname(end-7));
     
     % set up audio extraction
-    tstep = 0.025; % minimum frequency is 1/tstep
+    tstep = 0.025; % minimum frequency is... what 
     spf = ceil(tstep*fs); % will need to edit this
     afr = dsp.AudioFileReader('Filename',fname,'PlayCount',1,'SamplesPerFrame',spf);
     adw = audioDeviceWriter('SampleRate', afr.SampleRate);

@@ -1,4 +1,4 @@
-function audio = recordAudio(recordDuration)
+function audio = recordAudio(recordDuration,msg)
     %%    
     fs = 44100; % hard code sample rate
     tstep = 0.025; % minimum frequency is 1/tstep
@@ -10,10 +10,19 @@ function audio = recordAudio(recordDuration)
     tstart = 0;
     tend = tstart + (spf/fs);
     readTimer = tic;
+    msg_on = 0;
 
     while tend <= recordDuration
         frame = afr();
         audio = [audio; frame];
+        
+        if ~isempty(msg) > 0 && tstart > 0.1*recordDuration && msg_on == 0;
+            h = text(0.5,0.5,msg,'FontSize',50,'HorizontalAlignment','center');
+            axis off
+            drawnow()
+            msg_on = 1;
+        end
+        
         % update timer
         rt = toc(readTimer);
         timeDiff = tend-rt;
@@ -21,7 +30,7 @@ function audio = recordAudio(recordDuration)
         tend = tstart + (spf/fs);
         
         % wait until the window is finished
-        WaitSecs(timeDiff);
+        %WaitSecs(timeDiff);
     end
 release(afr);
     

@@ -1,4 +1,4 @@
-function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plotCents,modelF0s,barwidth)
+function [f0s,f0cents,t,amps,pdcs,pitchScore,audio] = plotUserPitch(recordDuration,pitch_lims,amp_mod,plotCents,modelF0s,barwidth)
     % set up recording device   
     fs = 44100; % hard code sample rate
     tstep = 0.025; % minimum frequency is 1/tstep
@@ -18,7 +18,7 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         end
     end    
     % set up for baseline
-    title('#####','FontSize',30)
+    title('WAIT','FontSize',30)
     drawnow()
     baseDuration = 1;
     amp_threshold = 0;
@@ -33,18 +33,15 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         timeDiff = tend-rt;
         tstart = tend+1/fs;
         tend = tstart + (spf/fs);
-        WaitSecs(timeDiff);
+        %WaitSecs(timeDiff);
     end
     amp_threshold = amp_threshold*amp_mod;    
-    
-    % set recording duration
-    recordDuration = 3;
-    
+        
     % initialize variables
     f0_tm1 = NaN;
     base_f0 = NaN;
     f0_t = NaN;
-
+    pitchScore = [];
 
     amps(1) = amp_threshold;
     t(1) = -tstep;
@@ -91,11 +88,16 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
                 pitchFound = 1;
             elseif pitchFound == 1 && pdc_t >= pdc_threshold*0.9 % lower threshold after first sample
                 [f0_t,pdc_t,base_f0] = getF0(base_f0,amp_t,amp_threshold,frame,fs,pitch_lims);
+            else
+                f0_t = NaN;
+                pdc_t = NaN;
+                f0_tm1 = NaN;
             end            
             audio = [audio; frame];
         else
             f0_t = NaN;
             pdc_t = NaN;
+            f0_tm1 = NaN;
         end
         
         % store
@@ -114,26 +116,29 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         end
         % if barwidth or modelF0s is unspecified, just plot a red line. 
         if isempty(barwidth) || isempty(modelF0s)
-            plot(x,y,'r','linewidth',4);
+            plot(x,y,'ro-','linewidth',4);
         else
             % if modelF0s is specified, plot a green line when within
             % target boundaries.
             if cnt <= length(modelF0s)
                 if y(2) >= modelF0s(cnt)-barwidth && y(2) <= modelF0s(cnt)+barwidth
-                    plot(x,y,'g','linewidth',4);
+                    plot(x,y,'go-','linewidth',4);
+                    pitchScore(cnt) = 1;
                 else
-                    plot(x,y,'r','linewidth',4);
+                    plot(x,y,'ro-','linewidth',4);
+                    pitchScore(cnt) = 0;
                 end
+            else
+                plot(x,y,'ro-','linewidth',4);
+                pitchScore(cnt) = 0;
             end
         end
         hold on
-        
         
         % assign current values to previous value status
         amp_tm1 = amp_t;
         f0_tm1 = f0_t;
         pdc_tm1 = pdc_t;
-        
         
         % update counter
         cnt = cnt+1;
@@ -146,9 +151,10 @@ function [f0s,f0cents,t,amps,pdcs,audio] = plotUserPitch(pitch_lims,amp_mod,plot
         
         % wait until the window is finished
         drawnow()
-        WaitSecs(timeDiff);
+        %WaitSecs(timeDiff);
     end
 release(afr);
 title('')
+drawnow()
 
 end

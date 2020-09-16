@@ -1,6 +1,6 @@
 function [pitchScore] = plotPitchScore(f0s,f0cents,modelF0s,barwidth,useCents)
 
-    pitchScore = getPitchScore(f0s,f0cents,modelF0s,barwidth,useCents);
+    %pitchScore = getPitchScore(f0s,f0cents,modelF0s,barwidth,useCents);
     if pitchScore == 1
         scoreLabel = 'PERFECT!';
     elseif pitchScore >= 0.9
@@ -12,6 +12,6 @@ function [pitchScore] = plotPitchScore(f0s,f0cents,modelF0s,barwidth,useCents)
     else
         scoreLabel = 'Keep practicing';
     end
-    title({sprintf('Score = %g',round(pitchScore,2)),scoreLabel},'FontSize',30)
+    title(sprintf('Score = %g',round(pitchScore,2)),'FontSize',30)
     drawnow()
 end

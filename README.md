@@ -1,0 +1,6 @@
+# Realtime Pitch Production Experiment
+## How to run the experiment
+1. Open matlab 
+2. cd matlab into the unzipped experiment directory. 
+3. Type in _findPitchLimits()_. This function will first present a blank screen, then ask you to say the days of the week quickly. Then it will do some pitch analysis, then have you try and copy a pure tone sweep. It will repeat the tone sweep several times and request that you check for strange jumps in the pitch tracking If all that goes correctly, it will then give you your lower and upper pitch limits, and an amplitude modifier value. 
+4. You then type in _runPitchExpr(ID (e.g., 'WLS'),gender ('f' or 'm'),[lower_pitch_limit upper_pitch_limit],amplitude_modifier (e.g., 8))_. The experiment will start and present instructions. On each trial, a screen will appear and it will say ‘LISTEN’. You will hear a speaker producing a word. Then it will say ‘WAIT’, then ‘SPEAK’. When it says SPEAK, try to repeat the word that you heard with the same pitch. then it will give you a score. Let me know how it goes and hopefully it won’t crash. Thanks!

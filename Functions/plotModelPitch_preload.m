@@ -127,7 +127,7 @@ function [f0s, t, amps,pdcs] = plotModelPitch_preload(fname,pitch_lims,amp_mod,b
         sampend = sampstart+spf-1;
         
         % wait until the window is finished
-        WaitSecs(timeDiff);
+        %WaitSecs(timeDiff);
         drawnow()
         
         % play audio

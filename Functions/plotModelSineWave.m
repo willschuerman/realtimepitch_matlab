@@ -115,7 +115,7 @@ function [f0s, t, amps,pdcs] = plotModelSineWave(s,fs,pitch_lims,amp_mod,barwidt
         sampend = sampstart+spf-1;
         
         % wait until the window is finished
-        WaitSecs(timeDiff);
+        %WaitSecs(timeDiff);
         drawnow()
         
         % play audio
